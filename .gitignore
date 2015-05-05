@@ -1,0 +1,9 @@
+/.idea/
+target/
+/testdb-*
+/\.target/
+/\.cache
+/\.project
+/\.classpath
+/\.settings/
+.DS_Store
