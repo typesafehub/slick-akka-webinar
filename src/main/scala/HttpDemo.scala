@@ -16,6 +16,8 @@ import akka.stream.scaladsl.{ Sink, Source }
 import akka.stream.stage.{ Context, PushPullStage }
 import akka.util.{ ByteString, Timeout }
 import spray.json._
+import slick.driver.H2Driver.api._
+import DataModel._
 
 object HttpDemo extends App {
   implicit val sys = ActorSystem("TheDemo")
@@ -23,10 +25,8 @@ object HttpDemo extends App {
   implicit val timeout = Timeout(3.seconds)
   import sys.dispatcher
 
-  case class Item(id: Int, name: String)
-  object Item extends DefaultJsonProtocol {
-    implicit val format = jsonFormat2(apply)
-  }
+  import DefaultJsonProtocol._
+  implicit val denormalizedOrderFormat = jsonFormat5(DenormalizedOrder.apply)
 
   class ToJsonArray[T](implicit f: RootJsonFormat[T])
       extends PushPullStage[T, ByteString] {
@@ -42,13 +42,15 @@ object HttpDemo extends App {
       ctx.absorbTermination()
   }
 
-  private def getFromDb(id: Int): Publisher[Item] =
-    Source(List(Item(1, "one"), Item(2, "two"), Item(3, "three")))
+  val db = Database.forConfig("reportingDB")
+
+  private def getFromDb(userId: Int): Publisher[DenormalizedOrder] =
+    Source(db.stream(denormalizedOrders.filter(_.userId === userId).result))
       .runWith(Sink.publisher)
 
   Http().bindAndHandle(
-    path("items" / IntNumber) { id =>
-      val pub = Source(getFromDb(id)).transform(() => new ToJsonArray)
+    path("orders" / IntNumber) { userId =>
+      val pub = Source(getFromDb(userId)).transform(() => new ToJsonArray)
       complete(HttpEntity.Chunked.fromData(`application/json`, pub))
     },
     "localhost", 8080)

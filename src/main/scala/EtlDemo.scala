@@ -17,8 +17,8 @@ object EtlDemo extends App {
   val db4 = Database.forConfig("reportingDB")
 
   val pUsers = db1.stream(users.result)
-  def pShippedOrdersByUserId(id: Int) = db2.stream(orders.filter(_.userID === id).result)
-  def pOpenOrdersByUserId(id: Int) = db3.stream(orders.filter(_.userID === id).result)
+  def pShippedOrdersByUserId(id: Int) = db2.stream(orders.filter(_.userId === id).result)
+  def pOpenOrdersByUserId(id: Int) = db3.stream(orders.filter(_.userId === id).result)
 
   //TODO: Iterate over all users, get their shipped and open orders, create a DenormalizedOrder for each record,
   //group them in groups of 1000, then call db4.run(denormalizedOrders ++= g) for each group and wait until the
