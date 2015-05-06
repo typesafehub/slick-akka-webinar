@@ -7,3 +7,4 @@ target/
 /\.classpath
 /\.settings/
 .DS_Store
+/.target/

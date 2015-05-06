@@ -1,4 +1,4 @@
-name := "demo-http"
+name := "slick-akka-webinar"
  
 scalaVersion := "2.11.6"
  

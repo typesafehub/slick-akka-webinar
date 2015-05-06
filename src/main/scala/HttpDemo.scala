@@ -31,13 +31,18 @@ object HttpDemo extends App {
   class ToJsonArray[T](implicit f: RootJsonFormat[T])
       extends PushPullStage[T, ByteString] {
     private var first = true
+
     override def onPush(elem: T, ctx: Context[ByteString]) = {
       val leading = if (first) { first = false; "[" } else ","
-      ctx.push(ByteString(leading + elem.toJson.compactPrint))
+      ctx.push(ByteString(leading + elem.toJson.compactPrint + "\n"))
     }
+
     override def onPull(ctx: Context[ByteString]) =
-      if (ctx.isFinishing) ctx.pushAndFinish(ByteString("]"))
-      else ctx.pull()
+      if (ctx.isFinishing) {
+        if (first) ctx.pushAndFinish(ByteString("[]"))
+        else ctx.pushAndFinish(ByteString("]"))
+      } else ctx.pull()
+
     override def onUpstreamFinish(ctx: Context[ByteString]) =
       ctx.absorbTermination()
   }
@@ -54,4 +59,6 @@ object HttpDemo extends App {
       complete(HttpEntity.Chunked.fromData(`application/json`, pub))
     },
     "localhost", 8080)
+
+  println("listening")
 }
