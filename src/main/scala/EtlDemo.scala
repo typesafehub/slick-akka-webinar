@@ -23,9 +23,13 @@ object EtlDemo extends App {
   val db4 = Database.forConfig("reportingDB")
 
   val pUsers = db1.stream(users.result)
-  def pShippedOrdersByUserId(id: Int) = db2.stream(orders.filter(_.userId === id).result)
-  def pOpenOrdersByUserId(id: Int) = db3.stream(orders.filter(_.userId === id).result)
   
+  def pShippedOrdersByUserId(id: Int) =
+    db2.stream(orders.filter(_.userId === id).result)
+
+  def pOpenOrdersByUserId(id: Int) =
+    db3.stream(orders.filter(_.userId === id).result)
+
   Await.result(db4.run(denormalizedOrders.delete), 3.seconds)
   sys.log.info("denormalized orders deleted")
 
@@ -37,6 +41,7 @@ object EtlDemo extends App {
       .map { user =>
         val shipped = Source(pShippedOrdersByUserId(user.id))
           .map(order => denormalize(user, order, true))
+          
         val notShipped = Source(pOpenOrdersByUserId(user.id))
           .map(order => denormalize(user, order, false))
 
@@ -49,7 +54,8 @@ object EtlDemo extends App {
       }
       .flatten(FlattenStrategy.concat)
       .grouped(1000)
-      .mapAsync(1)(g => db4.run(denormalizedOrders ++= g))
+      // parallelism tunable here as well
+      .mapAsync(4)(g => db4.run(denormalizedOrders ++= g))
       .runForeach(r => sys.log.info("wrote {}", r))
 
   Await.result(future, 10.seconds)

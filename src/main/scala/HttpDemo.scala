@@ -50,12 +50,13 @@ object HttpDemo extends App {
   val db = Database.forConfig("reportingDB")
 
   private def getFromDb(userId: Int): Publisher[DenormalizedOrder] =
-    Source(db.stream(denormalizedOrders.filter(_.userId === userId).result))
-      .runWith(Sink.publisher)
+    db.stream(denormalizedOrders.filter(_.userId === userId).result)
 
   Http().bindAndHandle(
-    path("orders" / IntNumber) { userId =>
-      val pub = Source(getFromDb(userId)).transform(() => new ToJsonArray)
+    (get & path("orders" / IntNumber)) { userId =>
+      val pub =
+        Source(getFromDb(userId))
+          .transform(() => new ToJsonArray)
       complete(HttpEntity.Chunked.fromData(`application/json`, pub))
     },
     "localhost", 8080)
