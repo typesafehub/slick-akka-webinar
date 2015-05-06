@@ -22,8 +22,18 @@ object EtlDemo extends App {
   val db3 = Database.forConfig("openOrdersDB")
   val db4 = Database.forConfig("reportingDB")
 
+  /* insert into denormalized_orders(order_id, date, user_id, user_name, shipped)
+       select o.id, cast(o.date as string), u.id, u.name, o.shipped
+       from users u,
+       (
+         select id, date, user_id, true as shipped from shipped_orders
+         union all select id, date, user_id, false as shipped from open_orders
+       ) o
+       where o.user_id = u.id
+   */
+
   val pUsers = db1.stream(users.result)
-  
+
   def pShippedOrdersByUserId(id: Int) =
     db2.stream(orders.filter(_.userId === id).result)
 
@@ -63,7 +73,6 @@ object EtlDemo extends App {
 
   sys.shutdown()
 
-  //Finally: Make sure to close all DBs
   db1.close()
   db2.close()
   db3.close()
