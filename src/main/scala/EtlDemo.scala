@@ -14,7 +14,7 @@ import akka.actor.ActorSystem
 
 object EtlDemo extends App {
   val sys = ActorSystem("EtlDemo")
-  implicit val mat = ActorFlowMaterializer()(sys)
+  implicit val mat = ActorMaterializer()(sys)
   import sys.dispatcher
 
   val db1 = Database.forConfig("usersDB")
