@@ -11,7 +11,7 @@ import akka.http.scaladsl.Http
 import akka.http.scaladsl.model.ContentTypes._
 import akka.http.scaladsl.model.HttpEntity
 import akka.http.scaladsl.server.Directives._
-import akka.stream.ActorFlowMaterializer
+import akka.stream.ActorMaterializer
 import akka.stream.scaladsl.{ Sink, Source }
 import akka.stream.stage.{ Context, PushPullStage }
 import akka.util.{ ByteString, Timeout }
@@ -21,7 +21,7 @@ import DataModel._
 
 object HttpDemo extends App {
   implicit val sys = ActorSystem("TheDemo")
-  implicit val mat = ActorFlowMaterializer()
+  implicit val mat = ActorMaterializer()
   implicit val timeout = Timeout(3.seconds)
   import sys.dispatcher
 
@@ -52,7 +52,7 @@ object HttpDemo extends App {
   private def getFromDb(userId: Int): Publisher[DenormalizedOrder] =
     db.stream(denormalizedOrders.filter(_.userId === userId).result)
 
-  Http().bindAndHandle(
+  val binding = Http().bindAndHandle(
     (get & path("orders" / IntNumber)) { userId =>
       val pub =
         Source(getFromDb(userId))
@@ -62,4 +62,6 @@ object HttpDemo extends App {
     "localhost", 8080)
 
   println("listening")
+  Console.readLine()
+  binding.map(_.unbind()).onComplete(_ => sys.shutdown())
 }

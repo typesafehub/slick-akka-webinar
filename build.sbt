@@ -2,10 +2,10 @@ name := "slick-akka-webinar"
  
 scalaVersion := "2.11.6"
  
-val akkaVersion = "1.0-RC2"
+val akkaVersion = "1.0-RC4"
 
 libraryDependencies ++= Seq(
-  "com.typesafe.akka" %% "akka-http-scala-experimental" % akkaVersion,
+  "com.typesafe.akka" %% "akka-http-experimental" % akkaVersion,
   "com.typesafe.akka" %% "akka-http-xml-experimental" % akkaVersion,
   "com.typesafe.akka" %% "akka-http-spray-json-experimental" % akkaVersion,
   "com.typesafe.slick" %% "slick" % "3.0.0",
